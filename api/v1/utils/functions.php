@@ -18,8 +18,8 @@
         if ($user_details['user_bio'] == NULL) $user_details['user_bio'] = "";
 
         if ($include_follow == 1) {
-          $get_followers = $db->prepare("SELECT users.* FROM users INNER JOIN follow ON users.user_id = follow.follower_id WHERE follow.following_id = :user_id");
-          $get_following = $db->prepare("SELECT users.* FROM users INNER JOIN follow ON users.user_id = follow.following_id WHERE follow.follower_id = :user_id");
+          $get_followers = $db->prepare("SELECT * FROM follow WHERE following_id = :user_id");
+          $get_following = $db->prepare("SELECT * FROM follow WHERE follower_id = :user_id");
 
           $get_followers->execute(array(
             ":user_id" => $user_id
@@ -32,29 +32,12 @@
           $user_details['followers'] = $get_followers->fetchAll(PDO::FETCH_ASSOC);
           $user_details['following'] = $get_following->fetchAll(PDO::FETCH_ASSOC);
 
-          // hide emails and passwords of followers and following users & set followers and following
           for ($i = 0; $i < count($user_details['followers']); $i++) {
-            $user_details['followers'][$i]['user_email'] = "";
-            $user_details['followers'][$i]['user_password'] = "";
-
-            // NULL -> empty string
-            if ($user_details['followers'][$i]['user_fullname'] == NULL) $user_details['followers'][$i]['user_fullname'] = "";
-            if ($user_details['followers'][$i]['user_bio'] == NULL) $user_details['followers'][$i]['user_bio'] = "";
-
-            $user_details['followers'][$i]['followers'] = [];
-            $user_details['followers'][$i]['following'] = [];
+            $user_details['followers'][$i] = getUserModel($db, $user_details['followers'][$i]['follower_id'], 1, 0);
           }
 
           for ($i = 0; $i < count($user_details['following']); $i++) {
-            $user_details['following'][$i]['user_email'] = "";
-            $user_details['following'][$i]['user_password'] = "";
-
-            // NULL -> empty string
-            if ($user_details['following'][$i]['user_fullname'] == NULL) $user_details['following'][$i]['user_fullname'] = "";
-            if ($user_details['following'][$i]['user_bio'] == NULL) $user_details['following'][$i]['user_bio'] = "";
-
-            $user_details['following'][$i]['followers'] = [];
-            $user_details['following'][$i]['following'] = [];
+            $user_details['following'][$i] = getUserModel($db, $user_details['following'][$i]['following_id'], 1, 0);
           }
         } else {
           $user_details['followers'] = [];
